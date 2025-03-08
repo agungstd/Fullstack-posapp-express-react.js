@@ -5,18 +5,14 @@ import { categoryValidation } from "../validations/category.validation.js";
 export const getAllCategory = async (req, res) => {
   try {
     const result = await prisma.category.findMany({
-      orderBy: {
-        id: "asc",
-      },
+      orderBy: { id: "asc" },
     });
     return res.status(200).json({
       message: "success",
       result,
     });
   } catch (error) {
-    logger.error(
-      "controllers/kategory.controller.js:getAllCategory - " + error.message
-    );
+    logger.error(`controllers/category.controller.js:getAllCategory - ${error.message}`);
     return res.status(500).json({
       message: error.message,
       result: null,
@@ -26,19 +22,24 @@ export const getAllCategory = async (req, res) => {
 
 export const getCategoryById = async (req, res) => {
   try {
+    const id = Number(req.params.id);
     const result = await prisma.category.findUnique({
-      where: {
-        id: Number(req.params.id),
-      },
+      where: { id },
     });
+    
+    if (!result) {
+      return res.status(404).json({
+        message: "Category not found",
+        result: null,
+      });
+    }
+    
     return res.status(200).json({
       message: "success",
       result,
     });
   } catch (error) {
-    logger.error(
-      "controllers/kategory.controller.js:getCategoryById - " + error.message
-    );
+    logger.error(`controllers/category.controller.js:getCategoryById - ${error.message}`);
     return res.status(500).json({
       message: error.message,
       result: null,
@@ -48,26 +49,25 @@ export const getCategoryById = async (req, res) => {
 
 export const createCategory = async (req, res) => {
   const { error, value } = categoryValidation(req.body);
-  if (error != null) {
+  if (error) {
     return res.status(400).json({
       message: error.details[0].message,
       result: null,
     });
   }
+  
   try {
     const result = await prisma.category.create({
       data: {
         kategoryName: value.kategoryName,
       },
     });
-    return res.status(200).json({
+    return res.status(201).json({
       message: "success",
       result,
     });
   } catch (error) {
-    logger.error(
-      "controllers/kategory.controller.js:createCategory - " + error.message
-    );
+    logger.error(`controllers/category.controller.js:createCategory - ${error.message}`);
     return res.status(500).json({
       message: error.message,
       result: null,
@@ -77,17 +77,28 @@ export const createCategory = async (req, res) => {
 
 export const updateCategory = async (req, res) => {
   const { error, value } = categoryValidation(req.body);
-  if (error != null) {
+  if (error) {
     return res.status(400).json({
       message: error.details[0].message,
       result: null,
     });
   }
+  
   try {
+    const id = Number(req.params.id);
+    const existingCategory = await prisma.category.findUnique({
+      where: { id },
+    });
+    
+    if (!existingCategory) {
+      return res.status(404).json({
+        message: "Category not found",
+        result: null,
+      });
+    }
+    
     const result = await prisma.category.update({
-      where: {
-        id: Number(req.params.id),
-      },
+      where: { id },
       data: {
         kategoryName: value.kategoryName,
       },
@@ -97,9 +108,7 @@ export const updateCategory = async (req, res) => {
       result,
     });
   } catch (error) {
-    logger.error(
-      "controllers/kategory.controller.js:updateCategory - " + error.message
-    );
+    logger.error(`controllers/category.controller.js:updateCategory - ${error.message}`);
     return res.status(500).json({
       message: error.message,
       result: null,
@@ -109,19 +118,27 @@ export const updateCategory = async (req, res) => {
 
 export const deleteCategory = async (req, res) => {
   try {
+    const id = Number(req.params.id);
+    const existingCategory = await prisma.category.findUnique({
+      where: { id },
+    });
+    
+    if (!existingCategory) {
+      return res.status(404).json({
+        message: "Category not found",
+        result: null,
+      });
+    }
+    
     const result = await prisma.category.delete({
-      where: {
-        id: Number(req.params.id),
-      },
+      where: { id },
     });
     return res.status(200).json({
       message: "success",
       result,
     });
   } catch (error) {
-    logger.error(
-      "controllers/kategory.controller.js:deleteCategory - " + error.message
-    );
+    logger.error(`controllers/category.controller.js:deleteCategory - ${error.message}`);
     return res.status(500).json({
       message: error.message,
       result: null,
