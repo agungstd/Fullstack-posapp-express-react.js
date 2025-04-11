@@ -3,6 +3,12 @@ import { logger } from "../utils/winston.js";
 
 export const getCartByProductId = async (req, res) => {
   const param = req.params;
+  if (!param.id || !param.userId) {
+    return res.status(400).json({
+      message: "Invalid input: Missing productId or userId",
+      result: null,
+    });
+  }
   try {
     const result = await prisma.carts.findMany({
       where: {
@@ -48,16 +54,26 @@ export const getAllCart = async (req, res) => {
 };
 
 export const createCart = async (req, res) => {
+  const { price, productName, qty, totalPrice, note, productId, userId } =
+    req.body;
+
+  if (!price || !productName || !qty || !totalPrice || !productId || !userId) {
+    return res.status(400).json({
+      message: "Invalid input: Missing required fields",
+      result: null,
+    });
+  }
+
   try {
     const result = await prisma.carts.create({
       data: {
-        price: req.body.price,
-        productName: req.body.productName,
-        qty: req.body.qty,
-        totalPrice: req.body.totalPrice,
-        note: req.body.note,
-        productId: req.body.productId,
-        userId: req.body.userId,
+        price,
+        productName,
+        qty,
+        totalPrice,
+        note,
+        productId,
+        userId,
       },
     });
     return res.status(200).json({
@@ -76,19 +92,29 @@ export const createCart = async (req, res) => {
 };
 
 export const updateCart = async (req, res) => {
+  const { price, productName, qty, totalPrice, note, productId, userId } =
+    req.body;
+
+  if (!price || !productName || !qty || !totalPrice || !productId || !userId || !req.params.id) {
+    return res.status(400).json({
+      message: "Invalid input: Missing required fields or cart ID",
+      result: null,
+    });
+  }
+
   try {
     const result = await prisma.carts.update({
       where: {
         id: Number(req.params.id),
       },
       data: {
-        price: Number(req.body.price),
-        productName: req.body.productName,
-        qty: Number(req.body.qty),
-        totalPrice: Number(req.body.totalPrice),
-        note: req.body.note,
-        productId: Number(req.body.productId),
-        userId: req.body.userId,
+        price: Number(price),
+        productName,
+        qty: Number(qty),
+        totalPrice: Number(totalPrice),
+        note,
+        productId: Number(productId),
+        userId,
       },
     });
     return res.status(200).json({
@@ -107,12 +133,18 @@ export const updateCart = async (req, res) => {
 };
 
 export const deleteCart = async (req, res) => {
-  console.log(req.params);
+  const param = req.params;
+  if (!param.id || !param.userId) {
+    return res.status(400).json({
+      message: "Invalid input: Missing cart ID or user ID",
+      result: null,
+    });
+  }
   try {
     const result = await prisma.carts.delete({
       where: {
-        id: Number(req.params.id),
-        userId: Number(req.params.userId),
+        id: Number(param.id),
+        userId: Number(param.userId),
       },
     });
     return res.status(200).json({
@@ -131,6 +163,12 @@ export const deleteCart = async (req, res) => {
 };
 
 export const deleteAllCart = async (req, res) => {
+  if (!req.params.userId) {
+    return res.status(400).json({
+      message: "Invalid input: Missing user ID",
+      result: null,
+    });
+  }
   try {
     const result = await prisma.carts.deleteMany({
       where: {
