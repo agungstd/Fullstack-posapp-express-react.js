@@ -4,7 +4,7 @@ import { logger } from "../utils/winston.js";
 import { orderReturnValidation } from "../validations/orderReturn.validation.js";
 
 export const insertOrderReturn = async (req, res) => {
-  // validation
+  // Validation
   const { error, value } = orderReturnValidation(req.body);
   if (error) {
     return res.status(400).json({
@@ -12,10 +12,11 @@ export const insertOrderReturn = async (req, res) => {
       result: null,
     });
   }
-  // create prisma transaction
+
+  // Create Prisma transaction
   try {
     const data = await prisma.$transaction(async (prisma) => {
-      // insert order return
+      // Insert order return
       const retur = await prisma.orderreturn.create({
         data: {
           code: setOrderCode("ORDR-"),
@@ -25,17 +26,18 @@ export const insertOrderReturn = async (req, res) => {
           orderId: Number(value.orderId),
         },
       });
-      // loop order detail
+
+      // Loop order detail
       for (let i = 0; i < value.detail.length; i++) {
-        // validari product & qty
+        // Validate product & qty
         if (
-          Number(value.detail[i].qty) == 0 ||
-          value.detail[i].qty == "" ||
-          value.detail[i].product == null
+          !value.detail[i].qty || Number(value.detail[i].qty) === 0 ||
+          value.detail[i].product === null
         ) {
-          throw new Error("qty and product cannot be empty");
+          throw new Error("qty and product cannot be empty or zero");
         }
-        // insert order detail
+
+        // Insert order detail
         await prisma.orderreturndetail.create({
           data: {
             productId: Number(value.detail[i].product.productId),
@@ -46,7 +48,8 @@ export const insertOrderReturn = async (req, res) => {
             returnId: Number(retur.id),
           },
         });
-        // update stock
+
+        // Update stock
         await prisma.product.update({
           where: {
             id: Number(value.detail[i].product.productId),
@@ -60,13 +63,14 @@ export const insertOrderReturn = async (req, res) => {
       }
       return retur;
     });
+
     return res.status(200).json({
       message: "Return Success",
       result: data,
     });
   } catch (error) {
     logger.error(
-      "controllers/cart.controller.js:deleteAllCart - " + error.message
+      "controllers/orderreturn.controller.js:insertOrderReturn - " + error.message
     );
     return res.status(500).json({
       message: error.message,
